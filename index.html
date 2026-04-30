@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NullTack SIEM</title>
+  <meta name="description" content="NullTack SIEM Dashboard — Real-time security event monitoring, log analysis, and threat detection." />
+  <link rel="icon" href="./nulltack.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+  <!-- ─── Header ──────────────────────────────────────── -->
+  <header id="main-header">
+    <div class="header-left">
+      <img src="./nulltack.svg" alt="CyberKhana Logo" class="header-logo" id="header-logo" />
+      <span class="header-title">SIEM</span>
+      <nav class="header-nav" id="header-nav">
+        <button class="nav-tab nav-tab--active" id="tab-dashboard" data-view="dashboard">Dashboard</button>
+        <button class="nav-tab" id="tab-rules" data-view="rules">Detection Rules</button>
+      </nav>
+    </div>
+    <div class="header-center" id="header-center">
+      <div class="search-wrapper" id="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="Filter logs by IP, event, status…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <span class="search-count" id="search-count"></span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="header-clock" id="header-clock"></span>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VIEW: Dashboard
+       ═══════════════════════════════════════════════════════ -->
+  <main id="view-dashboard">
+
+    <!-- Stats Row -->
+    <section class="stats-row" id="stats-row">
+      <div class="stat-card" id="stat-total">
+        <span class="stat-value" id="stat-total-val">0</span>
+        <span class="stat-label">Total Events</span>
+      </div>
+      <div class="stat-card stat-card--alert" id="stat-critical">
+        <span class="stat-value" id="stat-critical-val">0</span>
+        <span class="stat-label">Critical Alerts</span>
+      </div>
+      <div class="stat-card" id="stat-failed">
+        <span class="stat-value" id="stat-failed-val">0</span>
+        <span class="stat-label">Failed Events</span>
+      </div>
+      <div class="stat-card" id="stat-sources">
+        <span class="stat-value" id="stat-sources-val">0</span>
+        <span class="stat-label">Unique Sources</span>
+      </div>
+    </section>
+
+    <!-- Content Grid: Table + Sidebar -->
+    <div class="content-grid">
+
+      <!-- Log Table -->
+      <section class="table-section" id="table-section">
+        <div class="section-header">
+          <h1 class="section-title">Event Logs</h1>
+          <span class="table-info" id="table-info"></span>
+        </div>
+        <div class="table-container">
+          <table id="log-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Source IP</th>
+                <th>Destination IP</th>
+                <th>Event</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="log-tbody"></tbody>
+          </table>
+          <div class="table-empty" id="table-empty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <p>No matching log entries found.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Alert Sidebar -->
+      <aside class="alert-sidebar" id="alert-sidebar">
+        <div class="sidebar-header">
+          <h2 class="sidebar-title">Active Alerts</h2>
+        </div>
+
+        <div class="alert-card alert-card--critical" id="alert-brute-force">
+          <div class="alert-severity">
+            <span class="severity-badge severity--critical">CRITICAL</span>
+            <span class="alert-time">Just Now</span>
+          </div>
+          <h3 class="alert-heading">High Volume of Failed Logins Detected</h3>
+          <p class="alert-desc">Multiple failed SSH authentication attempts originating from <strong>103.214.78.92</strong> targeting internal server <strong>10.0.1.25</strong>. A successful login was detected after repeated failures — possible credential compromise.</p>
+          <div class="alert-rule-ref">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+            <span>Triggered by Rule: <strong>SSH Brute Force Detected</strong></span>
+          </div>
+          <div class="alert-meta">
+            <span class="meta-tag">SSH Brute-Force</span>
+            <span class="meta-tag">Credential Threat</span>
+          </div>
+        </div>
+
+        <div class="alert-card alert-card--warning" id="alert-geo">
+          <div class="alert-severity">
+            <span class="severity-badge severity--warning">WARNING</span>
+            <span class="alert-time">12 min ago</span>
+          </div>
+          <h3 class="alert-heading">Unusual Geo-Location Access</h3>
+          <p class="alert-desc">Outbound HTTPS connections to <strong>198.51.100.40</strong> flagged for anomalous geographic origin. Review recommended.</p>
+          <div class="alert-meta">
+            <span class="meta-tag">Geo-Anomaly</span>
+          </div>
+        </div>
+
+        <div class="alert-card alert-card--info" id="alert-policy">
+          <div class="alert-severity">
+            <span class="severity-badge severity--info">INFO</span>
+            <span class="alert-time">1 hr ago</span>
+          </div>
+          <h3 class="alert-heading">Firewall Policy Updated</h3>
+          <p class="alert-desc">Perimeter firewall rules for DMZ segment updated by admin. 3 new deny rules applied.</p>
+          <div class="alert-meta">
+            <span class="meta-tag">Policy Change</span>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VIEW: Detection Rules
+       ═══════════════════════════════════════════════════════ -->
+  <section id="view-rules" class="view-hidden">
+
+    <div class="rules-header">
+      <h1 class="section-title">Detection Rules</h1>
+      <span class="rules-count">3 rules configured</span>
+    </div>
+
+    <div class="rules-grid" id="rules-grid">
+
+      <!-- Rule 1: SSH Brute Force -->
+      <div class="rule-card" id="rule-ssh-brute">
+        <div class="rule-top">
+          <span class="rule-severity rule-severity--high">HIGH</span>
+          <span class="rule-id">RULE-001</span>
+        </div>
+        <h2 class="rule-name">SSH Brute Force Detected</h2>
+        <p class="rule-desc">Detects a high volume of failed SSH authentication attempts from a single source IP within a short time window, indicating a credential brute-force attack.</p>
+        <div class="rule-logic-block">
+          <span class="rule-logic-label">Trigger Logic</span>
+          <code class="rule-logic">COUNT(status: 'failed') > 10 AND same_source_ip WITHIN 1m</code>
+        </div>
+      </div>
+
+      <!-- Rule 2: Sensitive File Access -->
+      <div class="rule-card" id="rule-file-access">
+        <div class="rule-top">
+          <span class="rule-severity rule-severity--medium">MEDIUM</span>
+          <span class="rule-id">RULE-002</span>
+        </div>
+        <h2 class="rule-name">Sensitive File Access</h2>
+        <p class="rule-desc">Flags any request path that targets known sensitive system files or configuration endpoints that could expose credentials or secrets.</p>
+        <div class="rule-logic-block">
+          <span class="rule-logic-label">Trigger Logic</span>
+          <code class="rule-logic">request_path INCLUDES ('/etc/shadow', '/config.json')</code>
+        </div>
+      </div>
+
+      <!-- Rule 3: Impossible Travel -->
+      <div class="rule-card" id="rule-impossible-travel">
+        <div class="rule-top">
+          <span class="rule-severity rule-severity--low">LOW</span>
+          <span class="rule-id">RULE-003</span>
+        </div>
+        <h2 class="rule-name">Impossible Travel</h2>
+        <p class="rule-desc">Identifies when the same user account authenticates from two geographically distant locations within a time frame that makes physical travel impossible.</p>
+        <div class="rule-logic-block">
+          <span class="rule-logic-label">Trigger Logic</span>
+          <code class="rule-logic">GeoLocation_Diff(IP_1, IP_2) > 3000km WITHIN 4h</code>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="./app.js"></script>
+</body>
+</html>
