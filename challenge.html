@@ -314,7 +314,7 @@
 
     /* ─── SVG check animation ─── */
     .completion-banner.show .check-circle { animation: scaleIn 0.35s ease forwards; }
-    .completion-banner.show .check-path   { stroke-dasharray: 24; stroke-dashoffset: 24; animation: drawCheck 0.4s 0.2s ease forwards; }
+    .completion-banner.show .check-path   { stroke-dasharray: 40; stroke-dashoffset: 40; animation: drawCheck 0.4s 0.2s ease forwards; }
 
     @keyframes scaleIn  { from { transform: scale(0); } to { transform: scale(1); } }
     @keyframes drawCheck { to { stroke-dashoffset: 0; } }
@@ -637,7 +637,7 @@
       </div>
       <h2 class="modal-title">Exceptional Work!</h2>
       <p class="modal-desc">You have successfully analyzed the attack vector and solved all 7 challenges. The network is secure.</p>
-      <button class="modal-close-btn" onclick="document.getElementById('success-modal').classList.remove('show')">Return to Dashboard</button>
+      <button class="modal-close-btn" onclick="document.getElementById('success-modal').classList.remove('show')">OK</button>
     </div>
   </div>
 
