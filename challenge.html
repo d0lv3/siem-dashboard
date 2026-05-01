@@ -534,15 +534,17 @@
   <script>
     const TOTAL_QUESTIONS = 7;
 
-    /* ─── Answer Key ─── */
-    const ANSWERS = {
-      1: '103.214.78.92',
-      2: '10.0.1.25',
-      3: 'RULE-001',
-      4: 'devops',
-      5: '6',
-      6: '198.51.100.40',
-      7: 'HIGH'
+    /* ─── Answer Validation ─── */
+    // Answers are obfuscated to prevent source code inspection
+    const _0x1a2b = s => { let h = 0; for(let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0; return h; };
+    const _0x2b3c = {
+      1: -1895784333,
+      2: -1321722163,
+      3: 1545854944,
+      4: 2013145725,
+      5: 54,
+      6: 1087838669,
+      7: 2217378
     };
 
     let solved = {};
@@ -581,7 +583,7 @@
       // Force reflow for re-animation
       void feedback.offsetWidth;
 
-      if (answer.toUpperCase() === ANSWERS[qNum].toUpperCase()) {
+      if (_0x1a2b(answer.toUpperCase()) === _0x2b3c[qNum]) {
         // ── Correct ──
         feedback.innerHTML = successSVG() + '<span>Correct! Great investigation work.</span>';
         feedback.classList.add('show', 'success');
