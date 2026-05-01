@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NullTack SIEM — Challenge</title>
+  <meta name="description" content="NullTack SIEM Challenge — Test your SOC analyst skills by investigating security alerts." />
+  <link rel="icon" href="./nulltack.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Design Tokens (matching SIEM dashboard) ─── */
+    :root {
+      --bg-body:        #0b0f1a;
+      --bg-surface:     #111827;
+      --bg-surface-alt: #1a2236;
+      --border:         rgba(255, 255, 255, 0.08);
+      --border-hover:   rgba(255, 255, 255, 0.14);
+      --accent:         #e67e22;
+      --accent-dim:     rgba(230, 126, 34, 0.12);
+      --accent-glow:    rgba(230, 126, 34, 0.25);
+      --text-primary:   #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted:     #64748b;
+      --success:        #22c55e;
+      --success-dim:    rgba(34, 197, 94, 0.12);
+      --success-border: rgba(34, 197, 94, 0.35);
+      --error:          #ef4444;
+      --error-dim:      rgba(239, 68, 68, 0.12);
+      --error-border:   rgba(239, 68, 68, 0.35);
+      --radius:         12px;
+      --font:           'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-body);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ─── Header ─── */
+    .challenge-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+    }
+
+    .challenge-header img {
+      height: 32px;
+      width: auto;
+    }
+
+    .challenge-header .brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .challenge-header .brand span {
+      color: var(--accent);
+      font-weight: 700;
+      margin-left: 0.5rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+    }
+
+    .challenge-header .back-link {
+      margin-left: auto;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .challenge-header .back-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ─── Main Content ─── */
+    .challenge-container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem 2rem 4rem;
+    }
+
+    .challenge-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .challenge-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+    }
+
+    .challenge-subtitle strong {
+      color: var(--accent);
+    }
+
+    /* ─── Progress Bar ─── */
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-surface-alt);
+      border-radius: 100px;
+      margin-bottom: 2.5rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #f59e0b);
+      border-radius: 100px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─── Question Card ─── */
+    .question-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .question-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .question-card.correct {
+      border-color: var(--success-border);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.08);
+    }
+
+    .question-card.incorrect {
+      border-color: var(--error-border);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.08);
+    }
+
+    .question-number {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .question-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      font-style: italic;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .answer-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: var(--bg-body);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'Inter', monospace;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .answer-input:focus {
+      border-color: var(--accent);
+    }
+
+    .answer-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .submit-btn {
+      padding: 0.75rem 1.5rem;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: var(--font);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background: #cf6e16;
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ─── Feedback Alerts ─── */
+    .feedback {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      animation: feedbackSlide 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes feedbackSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .feedback.show { display: flex; }
+
+    .feedback.success {
+      background: var(--success-dim);
+      border: 1px solid var(--success-border);
+      color: var(--success);
+    }
+
+    .feedback.error {
+      background: var(--error-dim);
+      border: 1px solid var(--error-border);
+      color: var(--error);
+    }
+
+    .feedback svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    /* ─── Completion Banner ─── */
+    .completion-banner {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--success-border);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      margin-top: 1rem;
+      animation: bannerPop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .completion-banner.show { display: flex; }
+
+    @keyframes bannerPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .completion-banner svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1.25rem;
+    }
+
+    .completion-banner h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--success);
+      margin-bottom: 0.5rem;
+    }
+
+    .completion-banner p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    /* ─── SVG check animation ─── */
+    .completion-banner.show .check-circle { animation: scaleIn 0.35s ease forwards; }
+    .completion-banner.show .check-path   { stroke-dasharray: 24; stroke-dashoffset: 24; animation: drawCheck 0.4s 0.2s ease forwards; }
+
+    @keyframes scaleIn  { from { transform: scale(0); } to { transform: scale(1); } }
+    @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+    /* ─── Custom Modal Popup ─── */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(11, 15, 26, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--accent-glow);
+      border-radius: var(--radius);
+      padding: 3rem;
+      max-width: 460px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border);
+      transform: translateY(30px) scale(0.95);
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .modal-overlay.show .modal-content {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-dim);
+      border-radius: 50%;
+      color: var(--accent);
+    }
+
+    .modal-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+
+    .modal-desc {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .modal-close-btn {
+      padding: 0.75rem 2rem;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: var(--font);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .modal-close-btn:hover {
+      background: #cf6e16;
+      transform: translateY(-1px);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 600px) {
+      .challenge-container { padding: 2rem 1rem 3rem; }
+      .answer-row { flex-direction: column; }
+      .challenge-header { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Header ─── -->
+  <header class="challenge-header">
+    <img src="./nulltack.svg" alt="NullTack Logo" />
+    <div class="brand">NullTack <span>CHALLENGE</span></div>
+    <a href="./index.html" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Back to Dashboard
+    </a>
+  </header>
+
+  <!-- ─── Main ─── -->
+  <div class="challenge-container">
+
+    <h1 class="challenge-title">SOC Analyst Challenge</h1>
+    <p class="challenge-subtitle">
+      Investigate the <strong>NullTack SIEM Dashboard</strong> and answer the following questions.
+      Use the event logs and active alerts to find the correct answers.
+    </p>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- ── Question 1 ── -->
+    <div class="question-card" id="q1-card">
+      <div class="question-number">Question 1 of 7</div>
+      <p class="question-text">What is the source IP address of the attacker who performed the SSH brute-force attack?</p>
+      <p class="question-hint">Hint: Check the failed SSH login attempts in the Event Logs table.</p>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="q1-input" placeholder="e.g. 192.168.1.1" />
+        <button class="submit-btn" id="q1-btn" onclick="checkAnswer(1)">Submit</button>
+      </div>
+      <div class="feedback" id="q1-feedback"></div>
+    </div>
+
+    <!-- ── Question 2 ── -->
+    <div class="question-card" id="q2-card">
+      <div class="question-number">Question 2 of 7</div>
+      <p class="question-text">What is the internal destination IP that the attacker was targeting with SSH login attempts?</p>
+      <p class="question-hint">Hint: Look at the Destination IP column for the failed SSH entries.</p>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="q2-input" placeholder="e.g. 10.0.0.1" />
+        <button class="submit-btn" id="q2-btn" onclick="checkAnswer(2)">Submit</button>
+      </div>
+      <div class="feedback" id="q2-feedback"></div>
+    </div>
+
+    <!-- ── Question 3 ── -->
+    <div class="question-card" id="q3-card">
+      <div class="question-number">Question 3 of 7</div>
+      <p class="question-text">Which detection rule (by ID) triggered the "High Volume of Failed Logins" critical alert?</p>
+      <p class="question-hint">Hint: Check the alert sidebar — the rule reference is shown inside the critical alert card.</p>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="q3-input" placeholder="e.g. RULE-005" />
+        <button class="submit-btn" id="q3-btn" onclick="checkAnswer(3)">Submit</button>
+      </div>
+      <div class="feedback" id="q3-feedback"></div>
+    </div>
+
+    <!-- ── Question 4 ── -->
+    <div class="question-card" id="q4-card">
+      <div class="question-number">Question 4 of 7</div>
+      <p class="question-text">Which username was successfully compromised after the brute-force attack?</p>
+      <p class="question-hint">Hint: Look for an SSH login marked as SUCCESSFUL from the attacker's IP in the event logs.</p>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="q4-input" placeholder="e.g. admin" />
+        <button class="submit-btn" id="q4-btn" onclick="checkAnswer(4)">Submit</button>
+      </div>
+      <div class="feedback" id="q4-feedback"></div>
+    </div>
+
+    <!-- ── Question 5 ── -->
+    <div class="question-card" id="q5-card">
+      <div class="question-number">Question 5 of 7</div>
+      <p class="question-text">How many total failed events are recorded in the dashboard?</p>
+      <p class="question-hint">Hint: Check the stats cards at the top of the Dashboard view.</p>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="q5-input" placeholder="e.g. 12" />
+        <button class="submit-btn" id="q5-btn" onclick="checkAnswer(5)">Submit</button>
+      </div>
+      <div class="feedback" id="q5-feedback"></div>
+    </div>
+
+    <!-- ── Question 6 ── -->
+    <div class="question-card" id="q6-card">
+      <div class="question-number">Question 6 of 7</div>
+      <p class="question-text">What IP address was flagged in the "Unusual Geo-Location Access" warning alert?</p>
+      <p class="question-hint">Hint: Read the warning alert card in the Active Alerts sidebar.</p>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="q6-input" placeholder="e.g. 10.10.10.10" />
+        <button class="submit-btn" id="q6-btn" onclick="checkAnswer(6)">Submit</button>
+      </div>
+      <div class="feedback" id="q6-feedback"></div>
+    </div>
+
+    <!-- ── Question 7 ── -->
+    <div class="question-card" id="q7-card">
+      <div class="question-number">Question 7 of 7</div>
+      <p class="question-text">What is the severity level of the "SSH Brute Force Detected" detection rule?</p>
+      <p class="question-hint">Hint: Navigate to the Detection Rules view and check the severity badge on RULE-001.</p>
+      <div class="answer-row">
+        <input type="text" class="answer-input" id="q7-input" placeholder="e.g. Low" />
+        <button class="submit-btn" id="q7-btn" onclick="checkAnswer(7)">Submit</button>
+      </div>
+      <div class="feedback" id="q7-feedback"></div>
+    </div>
+
+    <!-- ── Completion Banner ── -->
+    <div class="completion-banner" id="completion-banner">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="30" stroke="#22c55e" stroke-width="3" fill="rgba(34,197,94,0.1)" class="check-circle"/>
+        <path d="M20 33 L28 41 L44 25" stroke="#22c55e" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="check-path"/>
+      </svg>
+      <h2>Challenge Complete!</h2>
+      <p>You have successfully investigated all seven SIEM questions. Well done, analyst.</p>
+    </div>
+
+  </div>
+
+  <script>
+    const TOTAL_QUESTIONS = 7;
+
+    /* ─── Answer Key ─── */
+    const ANSWERS = {
+      1: '103.214.78.92',
+      2: '10.0.1.25',
+      3: 'RULE-001',
+      4: 'devops',
+      5: '6',
+      6: '198.51.100.40',
+      7: 'HIGH'
+    };
+
+    let solved = {};
+    for (let i = 1; i <= TOTAL_QUESTIONS; i++) solved[i] = false;
+
+    /* ─── SVG Generators ─── */
+    function successSVG() {
+      return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="#22c55e" stroke-width="2" fill="rgba(34,197,94,0.12)" class="check-circle"/>
+        <path d="M8 12.5 L11 15.5 L16.5 9.5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" class="check-path"/>
+      </svg>`;
+    }
+
+    function errorSVG() {
+      return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="#ef4444" stroke-width="2" fill="rgba(239,68,68,0.12)"/>
+        <line x1="9" y1="9" x2="15" y2="15" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+        <line x1="15" y1="9" x2="9" y2="15" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    /* ─── Check Logic ─── */
+    function checkAnswer(qNum) {
+      const input    = document.getElementById(`q${qNum}-input`);
+      const feedback = document.getElementById(`q${qNum}-feedback`);
+      const card     = document.getElementById(`q${qNum}-card`);
+      const btn      = document.getElementById(`q${qNum}-btn`);
+      const answer   = input.value.trim();
+
+      if (!answer) return;
+
+      // Remove previous state
+      feedback.classList.remove('show', 'success', 'error');
+      card.classList.remove('correct', 'incorrect');
+
+      // Force reflow for re-animation
+      void feedback.offsetWidth;
+
+      if (answer.toUpperCase() === ANSWERS[qNum].toUpperCase()) {
+        // ── Correct ──
+        feedback.innerHTML = successSVG() + '<span>Correct! Great investigation work.</span>';
+        feedback.classList.add('show', 'success');
+        card.classList.add('correct');
+        input.disabled = true;
+        btn.disabled = true;
+        solved[qNum] = true;
+        updateProgress();
+      } else {
+        // ── Wrong ──
+        feedback.innerHTML = errorSVG() + '<span>Incorrect — go back to the dashboard and investigate further.</span>';
+        feedback.classList.add('show', 'error');
+        card.classList.add('incorrect');
+
+        // Reset error state after 2s
+        setTimeout(() => {
+          card.classList.remove('incorrect');
+        }, 2000);
+      }
+    }
+
+    /* ─── Progress ─── */
+    function updateProgress() {
+      const count = Object.values(solved).filter(Boolean).length;
+      document.getElementById('progress-fill').style.width = `${(count / TOTAL_QUESTIONS) * 100}%`;
+
+      if (count === TOTAL_QUESTIONS) {
+        document.getElementById('completion-banner').classList.add('show');
+        setTimeout(() => {
+          document.getElementById('success-modal').classList.add('show');
+        }, 1200); // Wait for banner animation to finish before showing modal
+      }
+    }
+
+    /* ─── Enter key support ─── */
+    document.querySelectorAll('.answer-input').forEach(input => {
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const qNum = input.id.replace('q', '').replace('-input', '');
+          checkAnswer(parseInt(qNum));
+        }
+      });
+    });
+  </script>
+
+  <!-- ── Custom Modal ── -->
+  <div class="modal-overlay" id="success-modal">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+      <h2 class="modal-title">Exceptional Work!</h2>
+      <p class="modal-desc">You have successfully analyzed the attack vector and solved all 7 challenges. The network is secure.</p>
+      <button class="modal-close-btn" onclick="document.getElementById('success-modal').classList.remove('show')">Return to Dashboard</button>
+    </div>
+  </div>
+
+</body>
+</html>
+
